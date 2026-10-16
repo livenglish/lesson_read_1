@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Буквенная миссия</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Slides: top alphabet strip (letters "unlock" as the lesson goes), stage in the middle, nav at the bottom. */
+:root {
+  --bg: #f3f8fc;
+  --surface: #ffffff;
+  --fg: #16264a;
+  --muted: #5a6b8c;
+  --line: #d5e1ee;
+  --accent: #2f6fe4;
+  --accent-ink: #ffffff;
+  --good: #1f9d55;
+  --bad: #d64545;
+  --known: #16264a;
+
+  --a-bg: #dff0ff; --a-ink: #14508f; --a-edge: #9ccbf2;
+  --e-bg: #dff5d6; --e-ink: #2a6a14; --e-edge: #a4d98f;
+  --i-bg: #fff2b8; --i-ink: #7a5a00; --i-edge: #f0d35e;
+  --o-bg: #d3f1f2; --o-ink: #0c5f68; --o-edge: #86cdd2;
+  --u-bg: #ffe0ea; --u-ink: #9a2150; --u-edge: #f2a6c0;
+  --c-bg: #ffe9d6; --c-ink: #8a3d00; --c-edge: #f5b47e;
+
+  --font-display: "Fredoka", "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a2e; --surface: #18263f; --fg: #eaf1ff; --muted: #9bb0d1; --line: #2b3d5e;
+    --accent: #6fa0ff; --accent-ink: #0f1a2e; --good: #4fd18b; --bad: #ff7b7b; --known: #eaf1ff;
+    --a-bg: #1a3556; --a-ink: #bfe0ff; --a-edge: #2f5b8e;
+    --e-bg: #1f3a1a; --e-ink: #c9f0b8; --e-edge: #3d6d31;
+    --i-bg: #4a3d0a; --i-ink: #ffe98a; --i-edge: #7d6717;
+    --o-bg: #0f3d42; --o-ink: #b4ecf0; --o-edge: #20737b;
+    --u-bg: #4a1a2f; --u-ink: #ffc3d7; --u-edge: #87345a;
+    --c-bg: #45270f; --c-ink: #ffd2ad; --c-edge: #7f4a1f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a2e; --surface: #18263f; --fg: #eaf1ff; --muted: #9bb0d1; --line: #2b3d5e;
+  --accent: #6fa0ff; --accent-ink: #0f1a2e; --good: #4fd18b; --bad: #ff7b7b; --known: #eaf1ff;
+  --a-bg: #1a3556; --a-ink: #bfe0ff; --a-edge: #2f5b8e;
+  --e-bg: #1f3a1a; --e-ink: #c9f0b8; --e-edge: #3d6d31;
+  --i-bg: #4a3d0a; --i-ink: #ffe98a; --i-edge: #7d6717;
+  --o-bg: #0f3d42; --o-ink: #b4ecf0; --o-edge: #20737b;
+  --u-bg: #4a1a2f; --u-ink: #ffc3d7; --u-edge: #87345a;
+  --c-bg: #45270f; --c-ink: #ffd2ad; --c-edge: #7f4a1f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 18px; line-height: 1.45;
+  display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font-family: inherit; cursor: pointer; color: inherit; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* Alphabet strip */
+.top { padding-top: max(12px, env(safe-area-inset-top, 0px)); display: flex; justify-content: center; }
+.abc { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 1100px; }
+.abc span {
+  width: 34px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 22px;
+  color: var(--line); border: 2px dashed var(--line); transition: all .35s;
+}
+.abc span.known { color: var(--surface); background: var(--known); border: 2px solid var(--known); }
+.abc span.new { color: var(--surface); background: var(--accent); border: 2px solid var(--accent); }
+.abc span.pop { animation: pop .6s; }
+@keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.5) rotate(-8deg)} 100%{transform:scale(1)} }
+
+/* Stage */
+main { flex: 1; min-height: 0; overflow: auto; display: flex; }
+.slide { margin: auto; width: 100%; max-width: 1100px; padding-block: 18px; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+.slide[hidden] { display: none !important; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; margin: 0; line-height: 1.1; text-wrap: balance; }
+h1 { font-size: clamp(40px, 7vw, 76px); }
+h2 { font-size: clamp(28px, 4.5vw, 46px); }
+.sub { color: var(--muted); font-weight: 700; margin: 0; max-width: 46ch; }
+.tag {
+  display: inline-block; font-weight: 800; font-size: 14px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--accent); background: var(--surface); border: 2px solid var(--line); border-radius: 999px; padding: 4px 14px;
+}
+
+/* Vowel colours inside words (same colours as the homework site) */
+.v-a { color: var(--a-ink); } .v-e { color: var(--e-ink); } .v-i { color: var(--i-ink); }
+.v-o { color: var(--o-ink); } .v-u { color: var(--u-ink); }
+.hl { text-decoration: underline; text-decoration-thickness: 5px; text-underline-offset: 8px; }
+
+/* Letter slide */
+.letter-card {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch;
+  background: var(--k-bg); border: 3px solid var(--k-edge); border-radius: 36px; padding: 24px;
+}
+.letter-card[data-k="a"]{--k-bg:var(--a-bg);--k-ink:var(--a-ink);--k-edge:var(--a-edge)}
+.letter-card[data-k="e"]{--k-bg:var(--e-bg);--k-ink:var(--e-ink);--k-edge:var(--e-edge)}
+.letter-card[data-k="i"]{--k-bg:var(--i-bg);--k-ink:var(--i-ink);--k-edge:var(--i-edge)}
+.letter-card[data-k="o"]{--k-bg:var(--o-bg);--k-ink:var(--o-ink);--k-edge:var(--o-edge)}
+.letter-card[data-k="u"]{--k-bg:var(--u-bg);--k-ink:var(--u-ink);--k-edge:var(--u-edge)}
+.letter-card[data-k="c"]{--k-bg:var(--c-bg);--k-ink:var(--c-ink);--k-edge:var(--c-edge)}
+.big-letter {
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(120px, 20vw, 220px); line-height: .9; color: var(--k-ink);
+}
+.sound { font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); font-weight: 600; color: var(--k-ink); }
+.left-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.pic {
+  background: var(--surface); border: 3px solid var(--k-edge); border-radius: 28px; padding: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%;
+}
+.pic .emo { font-size: clamp(80px, 13vw, 140px); line-height: 1.1; }
+.pic .key { font-family: var(--font-display); font-weight: 500; font-size: clamp(34px, 5vw, 52px); }
+.pic .key b { color: var(--k-ink); font-weight: 600; }
+.tips { display: grid; gap: 8px; text-align: left; width: 100%; }
+.tip { background: var(--surface); border-radius: 16px; padding: 10px 14px; font-weight: 700; font-size: 16px; color: var(--fg); }
+.tip b { color: var(--muted); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; display: block; }
+.read-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; }
+.read-label { font-weight: 800; color: var(--muted); font-size: 15px; letter-spacing: .08em; text-transform: uppercase; width: 100%; }
+
+.chip {
+  background: var(--surface); border: 3px solid var(--line); border-radius: 20px; padding: 6px 20px 8px; min-width: 96px;
+  font-family: var(--font-display); font-weight: 500; font-size: clamp(30px, 4.6vw, 44px); line-height: 1.15;
+  transition: transform .12s, border-color .2s;
+}
+.chip:hover { transform: translateY(-2px); border-color: var(--accent); }
+.chip:active { transform: scale(.96); }
+.chip.speaking { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.chip.speaking span { color: inherit; }
+
+/* Known letters (review) */
+.known-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.kl {
+  width: 92px; height: 104px; border-radius: 22px; background: var(--surface); border: 3px solid var(--line);
+  font-family: var(--font-display); font-weight: 600; font-size: 64px; line-height: 1; display: grid; place-items: center;
+  transition: transform .15s, background .2s;
+}
+.kl.on { background: var(--known); color: var(--surface); border-color: var(--known); transform: rotate(-4deg); }
+
+/* Blend cards: tap = next sound lights up, then the word glues together and is spoken */
+.blend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; width: 100%; }
+.blend {
+  background: var(--surface); border: 3px solid var(--line); border-radius: 24px; padding: 18px 10px 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 130px; justify-content: center;
+}
+.blend .letters { display: flex; gap: 16px; transition: gap .35s; font-family: var(--font-display); font-weight: 600; font-size: clamp(40px, 5.5vw, 56px); line-height: 1; }
+.blend .letters span { opacity: .25; transition: opacity .2s, transform .2s; }
+.blend .letters span.lit { opacity: 1; transform: translateY(-4px); }
+.blend.merged { border-color: var(--good); }
+.blend.merged .letters { gap: 0; }
+.blend.merged .letters span { opacity: 1; transform: none; }
+.blend .dots { display: flex; gap: 6px; }
+.blend .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.blend .dots i.lit { background: var(--accent); }
+.blend.merged .dots i { background: var(--good); }
+
+/* Picture game */
+.game-word { font-family: var(--font-display); font-weight: 600; font-size: clamp(70px, 12vw, 130px); line-height: 1; }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.opt {
+  width: clamp(110px, 20vw, 170px); aspect-ratio: 1; border-radius: 30px; background: var(--surface); border: 4px solid var(--line);
+  font-size: clamp(60px, 10vw, 96px); line-height: 1; display: grid; place-items: center; transition: transform .15s, border-color .2s;
+}
+.opt:hover { transform: translateY(-3px); border-color: var(--accent); }
+.opt.right { border-color: var(--good); background: color-mix(in srgb, var(--good) 18%, var(--surface)); }
+.opt.wrong { border-color: var(--bad); animation: shake .4s; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+.stars { font-size: 30px; letter-spacing: 4px; min-height: 40px; }
+.score { font-weight: 800; color: var(--muted); }
+
+/* Speed reading */
+.flash {
+  font-family: var(--font-display); font-weight: 600; font-size: clamp(90px, 18vw, 200px); line-height: 1;
+  background: var(--surface); border: 4px solid var(--line); border-radius: 40px; padding: 30px 60px; min-width: min(560px, 100%);
+}
+.timer { font-family: var(--font-display); font-size: 40px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.timer.low { color: var(--bad); }
+
+.btn {
+  background: var(--surface); color: var(--fg); border: 2px solid var(--line);
+  border-radius: 999px; padding: 10px 22px; min-height: 48px; font-size: 17px; font-weight: 800;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* Homework */
+.hw { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; align-items: center; text-align: left;
+  background: var(--surface); border: 3px solid var(--line); border-radius: 36px; padding: 28px; width: 100%; }
+#qr { background: #fff; padding: 14px; border-radius: 20px; width: 248px; height: 248px; display: grid; place-items: center; }
+#qr img, #qr canvas { display: block; }
+.hw ol { margin: 8px 0 0; padding-left: 1.3em; font-weight: 700; }
+.hw ol li { margin-bottom: 6px; }
+.url { font-family: var(--font-display); font-size: clamp(20px, 3vw, 28px); color: var(--accent); word-break: break-all; }
+
+/* Bottom nav */
+.nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding-block: 10px max(12px, env(safe-area-inset-bottom, 0px)); max-width: 1100px; width: 100%; margin: 0 auto;
+}
+.nav .count { font-weight: 800; color: var(--muted); }
+.nav-right { display: flex; gap: 8px; }
+
+@media (max-width: 720px) {
+  .letter-card { grid-template-columns: 1fr; }
+  .hw { grid-template-columns: 1fr; justify-items: center; text-align: left; }
+  .abc span { width: 26px; height: 30px; font-size: 17px; border-radius: 8px; }
+  .flash { padding: 24px 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="abc" id="abc" aria-label="Алфавит: открытые буквы"></div></div>
+<main id="stage"></main>
+<nav class="nav">
+  <button class="btn" id="prev" type="button">← Назад</button>
+  <span class="count" id="count"></span>
+  <div class="nav-right">
+    <button class="btn" id="full" type="button" title="Во весь экран">⛶</button>
+    <button class="btn primary" id="next" type="button">Дальше →</button>
+  </div>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var HOMEWORK_URL = "https://livenglish.github.io/read_1/";
+var KNOWN = ["s","a","t","i","p","n","g","b","l"];
+
+// Order matters: each letter's words only use letters already known or shown before it.
+var NEW = [
+  { l:"e", k:"e", sound:"/e/", emo:"🥚", key:"egg", words:["pen","ten","net","leg","pet","bet"],
+    say:"Как русское «э», коротко", move:"Разбиваем яйцо о край сковородки" },
+  { l:"o", k:"o", sound:"/ɒ/", emo:"🐙", key:"octopus", words:["pot","top","log","not","got","lot"],
+    say:"Короткое «о», рот округлён", move:"Щёлкаем выключателем: o-o-o" },
+  { l:"u", k:"u", sound:"/ʌ/", emo:"☂️", key:"umbrella", words:["sun","bug","nut","tub","bun","pup"],
+    say:"Короткое «а», как в слове «дал»", move:"Раскрываем над головой зонтик" },
+  { l:"m", k:"c", sound:"/m/", emo:"🐭", key:"mouse", words:["map","man","mop","mug","mat","men"],
+    say:"Мычим с закрытым ртом", move:"Гладим живот: «ммм, вкусно»" },
+  { l:"d", k:"c", sound:"/d/", emo:"🐶", key:"dog", words:["dad","dot","dig","bed","sad","lid"],
+    say:"Язык на бугорке за зубами", move:"Бьём в барабан: d-d-d" },
+  { l:"h", k:"c", sound:"/h/", emo:"🎩", key:"hat", words:["hat","hen","hot","hug","hip","him"],
+    say:"Просто выдох, как будто греем руки", move:"Запыхались после бега: ладонь у рта" },
+  { l:"r", k:"c", sound:"/r/", emo:"🐰", key:"rabbit", words:["rat","red","rug","run","rob","rip"],
+    say:"Не рычим! Язык не дрожит", move:"Щенок треплет тряпку: rrr" },
+  { l:"f", k:"c", sound:"/f/", emo:"🦊", key:"fox", words:["fan","fit","fun","fog","fat","fig"],
+    say:"Верхние зубы на нижней губе, дуем", move:"Сдуваем воздушный шарик ладонями" },
+  { l:"c", k:"c", sound:"/k/", emo:"🐱", key:"cat", words:["cat","cap","cup","cot","cut","can"],
+    say:"Как русское «к», с выдохом", move:"Щёлкаем пальцами, как кастаньетами" },
+  { l:"k", k:"c", sound:"/k/", emo:"🔑", key:"key", words:["kid","kit","skip","skin"],
+    say:"Тот же звук, что у c! Две буквы — один звук", move:"Щёлкаем пальцами, как у c" },
+  { l:"j", k:"c", sound:"/dʒ/", emo:"✈️", key:"jet", words:["jam","jet","jug","jog"],
+    say:"Мягкое «дж», одним звуком", move:"Прыгаем как желе" },
+  { l:"v", k:"c", sound:"/v/", emo:"🚐", key:"van", words:["van","vet","vest"],
+    say:"Как f, но с голосом", move:"Крутим руль фургона" },
+  { l:"w", k:"c", sound:"/w/", emo:"🕸️", key:"web", words:["web","wet","wig","win","wag"],
+    say:"Губы трубочкой, быстро «уэ»", move:"Дуем на ладонь — ветер" },
+  { l:"x", k:"c", sound:"/ks/", emo:"📦", key:"box", words:["box","fox","six","mix","fix"],
+    say:"Два звука сразу: «кс». Обычно в конце слова", move:"Перекрещиваем руки: X" },
+  { l:"z", k:"c", sound:"/z/", emo:"🦓", key:"zebra", words:["zip","zap","zigzag"],
+    say:"Звенит как пчела: zzz", move:"Машем крылышками пчелы" }
+];
+
+var REVIEW_WORDS = ["sat","pin","tap","big","bag","lip","nap","tip","pig","bat","sit","pan"];
+var PRACTICE = {
+  A: ["bet","pot","bun","peg","not","sun","log","tub"],
+  B: ["mud","hop","red","fog","cub","kid","him","rag"],
+  C: ["jog","vet","wig","fox","zip","frog","jump","hand"]
+};
+var PICS = [
+  ["cat","🐱"],["dog","🐶"],["hat","🎩"],["pig","🐷"],["sun","☀️"],["bug","🐛"],["bed","🛏️"],
+  ["box","📦"],["fox","🦊"],["van","🚐"],["map","🗺️"],["pen","🖊️"],["cup","☕"],["ten","🔟"],
+  ["jet","✈️"],["net","🥅"],["frog","🐸"],["hen","🐔"],["bus","🚌"],["web","🕸️"],["rat","🐀"],["bat","🦇"]
+];
+// All 53 words from the homework site, for speed reading.
+var HOMEWORK_WORDS = ["dad","bag","fan","ham","hat","van","map","sad","cat","bad","fat","rat","tap",
+  "vet","pet","hen","bed","pen","red","leg","ten","net","jet",
+  "big","zip","kid","tin","six","wig","pig","lip","sit","fin","hip",
+  "mop","not","hot","dog","pot","frog","box","dot","fox","log",
+  "bug","cup","jug","pup","mud","sun","cut","fun","rug"];
+
+/* ---------- speech (same approach as the homework page) ---------- */
+var synth = window.speechSynthesis, voice = null, current = null;
+function pickVoice() {
+  if (!synth) return;
+  var vs = synth.getVoices();
+  voice = vs.filter(function (v) { return /^en[-_]US/i.test(v.lang); })[0] ||
+          vs.filter(function (v) { return /^en/i.test(v.lang); })[0] || null;
+}
+if (synth) { pickVoice(); synth.onvoiceschanged = pickVoice; }
+function speak(text, el) {
+  if (!synth) return;
+  try {
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US"; if (voice) u.voice = voice; u.rate = 0.75; u.pitch = 1.05;
+    if (current) current.classList.remove("speaking");
+    current = el || null;
+    if (el) { el.classList.add("speaking"); u.onend = u.onerror = function () { el.classList.remove("speaking"); }; }
+    synth.speak(u);
+  } catch (e) { if (el) el.classList.remove("speaking"); }
+}
+
+/* ---------- helpers ---------- */
+function h(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function colorWord(w) {
+  return w.split("").map(function (ch) { return /[aeiou]/.test(ch) ? '<span class="v-' + ch + '">' + ch + "</span>" : ch; }).join("");
+}
+function shuffled(a) {
+  var b = a.slice();
+  for (var i = b.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = b[i]; b[i] = b[j]; b[j] = t; }
+  return b;
+}
+function chip(w) {
+  var b = h("button", "chip", colorWord(w)); b.type = "button";
+  b.addEventListener("click", function () { speak(w, b); });
+  return b;
+}
+
+/* ---------- alphabet strip ---------- */
+var unlocked = {};
+KNOWN.forEach(function (l) { unlocked[l] = "known"; });
+var abcEl = document.getElementById("abc"), abcSpans = {};
+"abcdefghijklmnopqrstuvwxyz".split("").forEach(function (l) {
+  var s = h("span", unlocked[l] || "", l); abcSpans[l] = s; abcEl.appendChild(s);
+});
+function unlock(l) {
+  if (unlocked[l]) return;
+  unlocked[l] = "new";
+  var s = abcSpans[l]; s.className = "new pop";
+}
+
+/* ---------- slide builders ---------- */
+var slides = [];
+
+function titleSlide() {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", "Урок чтения"));
+  s.appendChild(h("h1", null, "Буквенная миссия 🚀"));
+  s.appendChild(h("p", "sub", "Задача: открыть 15 новых букв и прочитать настоящие английские слова. Смотри на полоску сверху: каждая новая буква загорается."));
+  return { el: s };
+}
+
+function reviewSlide() {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", "Разминка"));
+  s.appendChild(h("h2", null, "Эти буквы мы уже знаем"));
+  s.appendChild(h("p", "sub", "Нажми на букву и скажи её звук. Потом прочитай слова."));
+  var g = h("div", "known-grid");
+  KNOWN.forEach(function (l) {
+    var b = h("button", "kl", l); b.type = "button";
+    b.addEventListener("click", function () { b.classList.toggle("on"); });
+    g.appendChild(b);
+  });
+  s.appendChild(g);
+  var r = h("div", "read-row");
+  REVIEW_WORDS.forEach(function (w) { r.appendChild(chip(w)); });
+  s.appendChild(r);
+  return { el: s };
+}
+
+function sectionSlide(tag, title, sub, letters) {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", tag));
+  s.appendChild(h("h1", null, title));
+  if (sub) s.appendChild(h("p", "sub", sub));
+  var g = h("div", "known-grid");
+  letters.forEach(function (l) { var d = h("div", "kl", "?"); d.dataset.l = l; g.appendChild(d); });
+  s.appendChild(g);
+  return { el: s, onShow: function () {
+    // Reveal the letters one by one as a teaser
+    Array.prototype.forEach.call(g.children, function (d, i) {
+      d.textContent = "?"; d.classList.remove("on");
+      setTimeout(function () { d.textContent = d.dataset.l; d.classList.add("on"); }, 300 + i * 250);
+    });
+  } };
+}
+
+function letterSlide(n) {
+  var s = h("section", "slide");
+  var card = h("div", "letter-card"); card.dataset.k = n.k;
+
+  var left = h("div", "left-col");
+  left.appendChild(h("div", "big-letter", n.l.toUpperCase() + n.l));
+  left.appendChild(h("div", "sound", n.sound));
+  var tips = h("div", "tips");
+  tips.appendChild(h("div", "tip", "<b>Как сказать</b>" + n.say));
+  tips.appendChild(h("div", "tip", "<b>Движение</b>" + n.move));
+  left.appendChild(tips);
+
+  var pic = h("button", "pic"); pic.type = "button";
+  pic.appendChild(h("div", "emo", n.emo));
+  var keyHtml = n.key.split("").map(function (ch) { return ch === n.l ? '<b class="hl">' + ch + "</b>" : ch; }).join("");
+  pic.appendChild(h("div", "key", keyHtml));
+  pic.addEventListener("click", function () { speak(n.key); });
+
+  card.appendChild(left); card.appendChild(pic);
+  s.appendChild(card);
+
+  var r = h("div", "read-row");
+  r.appendChild(h("div", "read-label", "Читаем с новой буквой"));
+  n.words.forEach(function (w) { r.appendChild(chip(w)); });
+  s.appendChild(r);
+  return { el: s, onShow: function () { unlock(n.l); } };
+}
+
+function blendSlide(tag, words) {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", tag));
+  s.appendChild(h("h2", null, "Склеиваем звуки"));
+  s.appendChild(h("p", "sub", "Нажимай на карточку: загорается звук за звуком, скажи каждый. Последнее нажатие склеивает слово."));
+  var g = h("div", "blend-grid");
+  words.forEach(function (w) {
+    var card = h("button", "blend"); card.type = "button";
+    var letters = h("div", "letters"), dots = h("div", "dots");
+    w.split("").forEach(function (ch) {
+      letters.appendChild(h("span", /[aeiou]/.test(ch) ? "v-" + ch : "", ch));
+      dots.appendChild(h("i"));
+    });
+    card.appendChild(letters); card.appendChild(dots);
+    var step = 0;
+    card.addEventListener("click", function () {
+      var spans = letters.children, ds = dots.children;
+      if (step < w.length) { spans[step].classList.add("lit"); ds[step].classList.add("lit"); step++; }
+      else if (step === w.length) { card.classList.add("merged"); speak(w); step++; }
+      else {
+        step = 0; card.classList.remove("merged");
+        Array.prototype.forEach.call(spans, function (x) { x.classList.remove("lit"); });
+        Array.prototype.forEach.call(ds, function (x) { x.classList.remove("lit"); });
+      }
+    });
+    g.appendChild(card);
+  });
+  s.appendChild(g);
+  return { el: s };
+}
+
+function gameSlide() {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", "Игра"));
+  s.appendChild(h("h2", null, "Прочитай и найди картинку"));
+  var word = h("div", "game-word"), opts = h("div", "opts"), stars = h("div", "stars"), score = h("div", "score");
+  var again = h("button", "btn primary", "Ещё раз"); again.type = "button"; again.hidden = true;
+  s.appendChild(word); s.appendChild(opts); s.appendChild(stars); s.appendChild(score); s.appendChild(again);
+  var ROUNDS = 10, round, right, queue, locked;
+
+  function start() { round = 0; right = 0; queue = shuffled(PICS).slice(0, ROUNDS); stars.textContent = ""; again.hidden = true; next(); }
+  function next() {
+    if (round >= ROUNDS) {
+      word.textContent = right >= 8 ? "Супер! 🏆" : "Молодцы! 💪";
+      opts.innerHTML = ""; score.textContent = "Правильно с первой попытки: " + right + " из " + ROUNDS; again.hidden = false;
+      return;
+    }
+    locked = false;
+    var item = queue[round], wrongTry = false;
+    word.innerHTML = colorWord(item[0]);
+    score.textContent = "Слово " + (round + 1) + " из " + ROUNDS;
+    var others = shuffled(PICS.filter(function (p) { return p[0] !== item[0]; })).slice(0, 2);
+    opts.innerHTML = "";
+    shuffled([item].concat(others)).forEach(function (p) {
+      var b = h("button", "opt", p[1]); b.type = "button"; b.setAttribute("aria-label", p[0]);
+      b.addEventListener("click", function () {
+        if (locked) return;
+        if (p[0] === item[0]) {
+          locked = true; b.classList.add("right"); speak(item[0]);
+          if (!wrongTry) { right++; stars.textContent += "⭐"; }
+          round++; setTimeout(next, 1200);
+        } else {
+          wrongTry = true; b.classList.remove("wrong"); void b.offsetWidth; b.classList.add("wrong");
+        }
+      });
+      opts.appendChild(b);
+    });
+  }
+  again.addEventListener("click", start);
+  start();
+  return { el: s };
+}
+
+function speedSlide() {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", "Скоростное чтение"));
+  s.appendChild(h("h2", null, "Сколько слов за минуту?"));
+  s.appendChild(h("p", "sub", "Это слова из домашнего задания. Читаешь — жми «Следующее» (или пробел)."));
+  var flash = h("div", "flash"), timer = h("div", "timer", "1:00"), score = h("div", "score", "Прочитано: 0");
+  var row = h("div", "btn-row");
+  var startBtn = h("button", "btn", "▶ Старт 1 минута"), nextBtn = h("button", "btn primary", "Следующее →"), hear = h("button", "btn", "🔊 Послушать");
+  [startBtn, hear, nextBtn].forEach(function (b) { b.type = "button"; row.appendChild(b); });
+  s.appendChild(timer); s.appendChild(flash); s.appendChild(row); s.appendChild(score);
+
+  var list = shuffled(HOMEWORK_WORDS), i = 0, n = 0, left = 0, iv = null;
+  function show() { flash.innerHTML = colorWord(list[i % list.length]); }
+  function advance() { i++; if (left > 0) { n++; score.textContent = "Прочитано: " + n; } show(); }
+  function fmt(t) { return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); }
+  startBtn.addEventListener("click", function () {
+    clearInterval(iv); list = shuffled(HOMEWORK_WORDS); i = 0; n = 0; left = 60;
+    score.textContent = "Прочитано: 0"; timer.textContent = fmt(left); timer.classList.remove("low"); show();
+    iv = setInterval(function () {
+      left--; timer.textContent = fmt(left); timer.classList.toggle("low", left <= 10);
+      if (left <= 0) { clearInterval(iv); score.textContent = "Время! Прочитано слов: " + n + " 🎉"; }
+    }, 1000);
+  });
+  nextBtn.addEventListener("click", advance);
+  hear.addEventListener("click", function () { speak(list[i % list.length]); });
+  show();
+  return { el: s, onKey: function (e) { if (e.key === " ") { e.preventDefault(); advance(); return true; } },
+           onHide: function () { clearInterval(iv); left = 0; timer.textContent = "1:00"; timer.classList.remove("low"); } };
+}
+
+function homeworkSlide() {
+  var s = h("section", "slide");
+  s.appendChild(h("span", "tag", "Домашнее задание"));
+  s.appendChild(h("h2", null, "Миссия дома: «Читаю сам» 🏠"));
+  var box = h("div", "hw");
+  var qr = h("div"); qr.id = "qr";
+  var txt = h("div");
+  txt.appendChild(h("div", "url", '<a href="' + HOMEWORK_URL + '" target="_blank" rel="noopener">' + HOMEWORK_URL.replace("https://", "") + "</a>"));
+  txt.appendChild(h("ol", null,
+    "<li>Открой сайт по QR-коду или ссылке.</li>" +
+    "<li>Сначала прочитай слово сам, потом нажми и проверь себя.</li>" +
+    "<li>Если трудно — включи кнопку «Медленно».</li>" +
+    "<li>Цель: все 53 слова с галочкой ✓. По 10 минут в день.</li>"));
+  box.appendChild(qr); box.appendChild(txt);
+  s.appendChild(box);
+  return { el: s, onShow: function () {
+    if (qr.dataset.done) return;
+    if (window.QRCode) { new QRCode(qr, { text: HOMEWORK_URL, width: 220, height: 220, colorDark: "#16264a", colorLight: "#ffffff" }); qr.dataset.done = 1; }
+    else qr.innerHTML = '<span style="color:#16264a;font-weight:800;text-align:center">QR-код не загрузился — используйте ссылку</span>';
+  } };
+}
+
+/* ---------- lesson plan ---------- */
+slides.push(titleSlide());
+slides.push(reviewSlide());
+slides.push(sectionSlide("Часть 1", "Новые гласные", "У гласных свой цвет — как на сайте с домашкой.", ["e","o","u"]));
+NEW.slice(0, 3).forEach(function (n) { slides.push(letterSlide(n)); });
+slides.push(blendSlide("Тренировка 1", PRACTICE.A));
+slides.push(sectionSlide("Часть 2", "Ещё 7 букв", null, ["m","d","h","r","f","c","k"]));
+NEW.slice(3, 10).forEach(function (n) { slides.push(letterSlide(n)); });
+slides.push(blendSlide("Тренировка 2", PRACTICE.B));
+slides.push(sectionSlide("Часть 3", "Последние 5", "Редкие, но важные буквы.", ["j","v","w","x","z"]));
+NEW.slice(10).forEach(function (n) { slides.push(letterSlide(n)); });
+slides.push(blendSlide("Тренировка 3", PRACTICE.C));
+slides.push(gameSlide());
+slides.push(speedSlide());
+slides.push(homeworkSlide());
+
+/* ---------- navigation ---------- */
+var stage = document.getElementById("stage"), idx = 0;
+slides.forEach(function (sl) { sl.el.hidden = true; stage.appendChild(sl.el); });
+function go(n) {
+  n = Math.max(0, Math.min(slides.length - 1, n));
+  var old = slides[idx];
+  if (old && old.onHide && n !== idx) old.onHide();
+  old.el.hidden = true;
+  idx = n;
+  var cur = slides[idx];
+  cur.el.hidden = false;
+  if (cur.onShow) cur.onShow();
+  stage.scrollTop = 0;
+  document.getElementById("count").textContent = (idx + 1) + " / " + slides.length;
+  document.getElementById("prev").disabled = idx === 0;
+  document.getElementById("next").disabled = idx === slides.length - 1;
+  try { history.replaceState(null, "", "#" + (idx + 1)); } catch (e) {}
+}
+document.getElementById("prev").addEventListener("click", function () { go(idx - 1); });
+document.getElementById("next").addEventListener("click", function () { go(idx + 1); });
+document.getElementById("full").addEventListener("click", function () {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  } catch (e) {}
+});
+document.addEventListener("keydown", function (e) {
+  var cur = slides[idx];
+  if (cur.onKey && cur.onKey(e)) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") go(idx + 1);
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") go(idx - 1);
+});
+
+// Letters from slides before the start point are unlocked too, so jumping to #N keeps the strip correct.
+var startAt = parseInt((location.hash || "").slice(1), 10) - 1 || 0;
+for (var k = 0; k < startAt && k < slides.length; k++) if (slides[k].onShow && slides[k].el.querySelector(".letter-card")) slides[k].onShow();
+go(startAt);
+</script>
+</body>
+</html>
