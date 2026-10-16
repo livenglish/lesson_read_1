@@ -330,6 +330,17 @@ h2 { font-size: clamp(28px, 4.5vw, 46px); }
 .scene .island:hover .top { filter: brightness(1.1); }
 .chest { left: 50%; top: 90%; z-index: 5; background: rgba(255,255,255,.9); border-radius: 999px; padding: 1cqh 4cqh; font-family: var(--font-display); font-weight: 600; font-size: 5cqh; white-space: nowrap; }
 
+/* Final celebration */
+.fw { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.party { background: rgba(10,15,40,.72); gap: 2cqh; }
+.party > :not(.fw) { position: relative; z-index: 1; }
+.party-title { font-size: 16cqh; color: #ffd23f; animation: bounce .8s ease-in-out infinite alternate; }
+.party-sub { font-size: 6cqh; }
+.party-trophy { font-size: 24cqh; line-height: 1; animation: spin 1.6s ease-in-out infinite alternate; }
+.party-btns { display: flex; gap: 3cqh; justify-content: center; margin-top: 2cqh; }
+@keyframes bounce { to { transform: translateY(-2cqh) scale(1.06); } }
+@keyframes spin { from { transform: rotate(-12deg) scale(.95); } to { transform: rotate(12deg) scale(1.1); } }
+
 /* Bottom nav */
 .nav {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -709,8 +720,9 @@ function islandGame(v, cls, hint, words, setup) {
   }
   function win() {
     mapDone[v] = true; if (mapApi) mapApi.refresh();
-    var w = h("div", "sc-win", "<div>Остров " + v.toUpperCase() + v + " пройден! ⭐</div>");
-    var b = h("button", null, "🗺️ На карту"); b.type = "button"; b.onclick = function () { goId("map"); };
+    var all = Object.keys(mapDone).length === 5;
+    var w = h("div", "sc-win", "<div>Остров " + v.toUpperCase() + v + " пройден! ⭐</div>" + (all ? "<div style=\"font-size:6cqh\">Это был последний остров!</div>" : ""));
+    var b = h("button", null, all ? "🏆 Забрать сокровище!" : "🗺️ На карту"); b.type = "button"; b.onclick = function () { goId("map"); };
     w.appendChild(b); sc.appendChild(w);
   }
   var built = false;
@@ -721,8 +733,6 @@ function islandGame(v, cls, hint, words, setup) {
 
 // A — pop the bubbles
 function bubblesGame(sc, words, api) {
-  shape(sc, "cloud", "left:6%;top:24%;width:20%;height:8%");
-  shape(sc, "cloud", "left:58%;top:14%;width:24%;height:9%");
   shape(sc, "hill", "left:-12%;top:68%;width:72%;height:64%;background:#86cf5f");
   shape(sc, "hill", "left:38%;top:60%;width:84%;height:72%;background:#64b847");
   deco(sc, "🌳", 94, 70, 22);
@@ -738,8 +748,6 @@ function bubblesGame(sc, words, api) {
 
 // E — move the net, butterflies show up nearby; click to catch
 function butterflyGame(sc, words, api) {
-  shape(sc, "cloud", "left:10%;top:8%;width:26%;height:10%");
-  shape(sc, "cloud", "left:60%;top:12%;width:22%;height:8%");
   shape(sc, "hill", "left:-20%;top:55%;width:80%;height:40%;background:#a5d77e");
   shape(sc, "hill", "left:45%;top:52%;width:80%;height:40%;background:#93cc6b");
   deco(sc, "🌲", 6, 52, 30); deco(sc, "🌲", 15, 56, 20);
@@ -842,9 +850,6 @@ function torchGame(sc, words, api) {
 
 // U — balloons float up; click to pop
 function balloonGame(sc, words, api) {
-  shape(sc, "cloud", "left:4%;top:18%;width:24%;height:9%");
-  shape(sc, "cloud", "left:44%;top:42%;width:30%;height:10%;opacity:.6");
-  shape(sc, "cloud", "left:70%;top:72%;width:34%;height:12%;opacity:.7");
   var cc = h("div", "sc-item cloud-count", '<span class="cc">☁️</span><span class="num">0</span>'); sc.appendChild(cc);
   var num = cc.querySelector(".num");
   api.onCount = function (n) { num.textContent = n; };
@@ -900,9 +905,78 @@ function mapSlide() {
     Object.keys(els).forEach(function (v) { els[v].classList.toggle("done", !!mapDone[v]); if (mapDone[v]) n++; });
     chest.textContent = n === 5 ? "🏆 Сокровище найдено!" : "⭐ " + n + " / 5";
   }
+  var celebrated = false, party = null;
+  function celebrate() {
+    if (party) party.stop();
+    var old = sc.querySelector(".party"); if (old) old.remove();
+    var o = h("div", "sc-win party",
+      '<div class="party-title">🎉 УРА! 🎉</div>' +
+      '<div class="party-sub">Все 5 островов пройдены!</div>' +
+      '<div class="party-trophy">🏆</div>' +
+      '<div class="party-sub">Сокровище найдено! Вы настоящие читатели!</div>');
+    var row = h("div", "party-btns");
+    var more = h("button", null, "🎆 Ещё салют!"); more.type = "button"; more.onclick = function () { party = fireworks(o, 6000); speak("Hooray! Well done!"); };
+    var close = h("button", null, "Закрыть"); close.type = "button"; close.onclick = function () { o.remove(); };
+    row.appendChild(more); row.appendChild(close); o.appendChild(row);
+    sc.appendChild(o);
+    party = fireworks(o, 7000);
+    speak("Hooray! Well done!");
+  }
   mapApi = { refresh: refresh };
   refresh();
-  return { id: "map", el: s, onShow: refresh };
+  return { id: "map", el: s,
+    onShow: function () {
+      refresh();
+      if (Object.keys(mapDone).length === 5 && !celebrated) { celebrated = true; setTimeout(celebrate, 300); }
+    },
+    onHide: function () { if (party) party.stop(); } };
+}
+
+// Fireworks on a canvas laid over the scene (under the party text).
+function fireworks(sc, ms) {
+  var cv = document.createElement("canvas"); cv.className = "fw";
+  var r = sc.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  sc.appendChild(cv);
+  var ctx = cv.getContext("2d"); ctx.scale(dpr, dpr);
+  var COLORS = ["#ffd23f", "#ff4fa8", "#4db8ff", "#5cf07a", "#ff8a1f", "#b98cff", "#ffffff"];
+  var parts = [], rockets = [], t0 = performance.now(), raf = 0, nextLaunch = 0;
+  function launch(now) {
+    rockets.push({ x: r.width * (.15 + Math.random() * .7), y: r.height, vy: -(r.height * (.9 + Math.random() * .35)),
+      ty: r.height * (.15 + Math.random() * .35), c: COLORS[Math.floor(Math.random() * COLORS.length)] });
+    nextLaunch = now + 250 + Math.random() * 350;
+  }
+  function burst(x, y, c) {
+    var n = 70, sp = r.height * (.25 + Math.random() * .15);
+    for (var i = 0; i < n; i++) {
+      var a = Math.PI * 2 * i / n, s = sp * (.5 + Math.random() * .5);
+      parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, c: Math.random() < .25 ? "#fff" : c });
+    }
+  }
+  var last = t0;
+  function tick(now) {
+    var dt = Math.min(.05, (now - last) / 1000); last = now;
+    ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.fillRect(0, 0, r.width, r.height);
+    ctx.globalCompositeOperation = "lighter";
+    if (now - t0 < ms && now > nextLaunch) launch(now);
+    rockets = rockets.filter(function (k) {
+      k.y += k.vy * dt;
+      ctx.fillStyle = k.c; ctx.beginPath(); ctx.arc(k.x, k.y, 3, 0, 7); ctx.fill();
+      if (k.y <= k.ty) { burst(k.x, k.y, k.c); return false; }
+      return true;
+    });
+    parts = parts.filter(function (p) {
+      p.vy += r.height * .35 * dt; p.vx *= .985; p.vy *= .985;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt * .7;
+      if (p.life <= 0) return false;
+      ctx.globalAlpha = p.life; ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+      return true;
+    });
+    if (now - t0 < ms || parts.length || rockets.length) raf = requestAnimationFrame(tick);
+    else cv.remove();
+  }
+  raf = requestAnimationFrame(tick);
+  return { stop: function () { cancelAnimationFrame(raf); cv.remove(); } };
 }
 
 /* ---------- lesson plan ---------- */
